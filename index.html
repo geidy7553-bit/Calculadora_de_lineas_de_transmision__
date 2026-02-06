@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analizador de Líneas de Transmisión | Ingeniería RF</title>
+    <meta name="description" content="Herramienta profesional para análisis de parámetros en sistemas de radiofrecuencia y microondas">
+    <meta name="keywords" content="líneas de transmisión, RF, microondas, diagrama de Smith, VSWR, impedancia">
+    <meta name="author" content="Universidad de Oriente">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <header role="banner">
+        <div class="header-content">
+            <h1 role="heading" aria-level="1">Analizador de Líneas de Transmisión</h1>
+            <p class="subtitle" id="app-description">
+                Herramienta profesional para análisis de parámetros en sistemas de radiofrecuencia y microondas.
+                Calcule impedancia característica, coeficiente de reflexión, ROE, pérdida de retorno y visualice
+                la distribución de ondas estacionarias con precisión de ingeniería.
+            </p>
+        </div>
+    </header>
+
+    <main class="main-container" role="main">
+        <div class="main-grid">
+            <!-- Controls Panel -->
+            <aside aria-labelledby="controls-heading">
+                <h2 class="controls-title" id="controls-heading">
+                    <span class="icon" aria-hidden="true">⚙️</span>
+                    Parámetros de Entrada
+                </h2>
+                
+                <form id="transmissionLineForm" novalidate>
+                    <!-- Z0 Input -->
+                    <div class="input-group">
+                        <label for="z0">
+                            Impedancia Característica (Z₀)
+                            <span class="unit">Ω</span>
+                        </label>
+                        <input
+                            type="number"
+                            id="z0"
+                            value="50"
+                            min="25"
+                            max="150"
+                            step="1"
+                            required
+                            aria-required="true"
+                            aria-describedby="z0Error z0Help"
+                            aria-invalid="false">
+                        <small id="z0Help" class="help-text">Típicamente 50Ω o 75Ω</small>
+                        <div class="error-message" id="z0Error" role="alert">
+                            La impedancia característica debe estar entre 25Ω y 150Ω
+                        </div>
+                    </div>
+
+                    <!-- Load Resistance -->
+                    <div class="input-group">
+                        <label for="r">
+                            Impedancia de Carga - Parte Real (R)
+                            <span class="unit">Ω</span>
+                        </label>
+                        <input
+                            type="number"
+                            id="r"
+                            value="75"
+                            min="0"
+                            step="0.1"
+                            required
+                            aria-required="true"
+                            aria-describedby="rError rHelp"
+                            aria-invalid="false">
+                        <small id="rHelp" class="help-text">Componente resistivo ≥ 0</small>
+                        <div class="error-message" id="rError" role="alert">
+                            La parte real de la impedancia debe ser ≥ 0
+                        </div>
+                    </div>
+
+                    <!-- Load Reactance -->
+                    <div class="input-group">
+                        <label for="x">
+                            Impedancia de Carga - Parte Imaginaria (X)
+                            <span class="unit">Ω</span>
+                        </label>
+                        <input
+                            type="number"
+                            id="x"
+                            value="30"
+                            step="0.1"
+                            required
+                            aria-required="true"
+                            aria-describedby="xError xHelp"
+                            aria-invalid="false">
+                        <small id="xHelp" class="help-text">Reactancia: positiva (inductiva) o negativa (capacitiva)</small>
+                        <div class="error-message" id="xError" role="alert">
+                            Ingrese un valor numérico válido para la reactancia
+                        </div>
+                    </div>
+
+                    <!-- Frequency -->
+                    <div class="input-group">
+                        <label for="frequency">Frecuencia de Operación</label>
+                        <input
+                            type="number"
+                            id="frequency"
+                            value="100"
+                            min="0.1"
+                            step="0.1"
+                            required
+                            aria-required="true"
+                            aria-describedby="freqError freqHelp"
+                            aria-invalid="false">
+                        <div class="unit-select">
+                            <label for="freqUnit">
+                                Unidad:
+                                <select id="freqUnit" aria-label="Unidad de frecuencia">
+                                    <option value="1e6">MHz</option>
+                                    <option value="1e3">kHz</option>
+                                    <option value="1">Hz</option>
+                                    <option value="1e9">GHz</option>
+                                </select>
+                            </label>
+                        </div>
+                        <small id="freqHelp" class="help-text">Frecuencia de trabajo del sistema</small>
+                        <div class="error-message" id="freqError" role="alert">
+                            La frecuencia debe ser mayor a 0
+                        </div>
+                    </div>
+
+                    <!-- Length -->
+                    <div class="input-group">
+                        <label for="length">Longitud de la Línea</label>
+                        <input
+                            type="number"
+                            id="length"
+                            value="2"
+                            min="0.01"
+                            step="0.01"
+                            required
+                            aria-required="true"
+                            aria-describedby="lenError lenHelp"
+                            aria-invalid="false">
+                        <div class="unit-select">
+                            <label for="lenUnit">
+                                Unidad:
+                                <select id="lenUnit" aria-label="Unidad de longitud">
+                                    <option value="1">m</option>
+                                    <option value="0.01">cm</option>
+                                    <option value="0.001">mm</option>
+                                </select>
+                            </label>
+                        </div>
+                        <small id="lenHelp" class="help-text">Longitud física de la línea</small>
+                        <div class="error-message" id="lenError" role="alert">
+                            La longitud debe ser mayor a 0
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="button-group">
+                        <button type="button" id="calculateBtn" class="btn-primary" aria-label="Calcular parámetros de la línea de transmisión">
+                            <span aria-hidden="true">🔄</span> Calcular
+                        </button>
+                        <button type="button" id="copyBtn" class="btn-secondary" aria-label="Copiar resultados al portapapeles">
+                            <span aria-hidden="true">📋</span> Copiar Resultados
+                        </button>
+                        <button type="button" id="resetBtn" class="btn-tertiary" aria-label="Restablecer valores predeterminados">
+                            <span aria-hidden="true">↺</span> Restablecer
+                        </button>
+                    </div>
+                </form>
+            </aside>
+
+            <!-- Voltage/Current Distribution -->
+            <section id="distribution" aria-labelledby="distribution-heading">
+                <h2 class="vis-title" id="distribution-heading">
+                    <span class="icon" aria-hidden="true">📊</span>
+                    Distribución de Voltaje y Corriente
+                </h2>
+                <div class="canvas-container">
+                    <canvas
+                        id="distributionCanvas"
+                        width="800"
+                        height="300"
+                        role="img"
+                        aria-label="Gráfico de distribución de voltaje (azul) y corriente (cian) a lo largo de la línea de transmisión"
+                        tabindex="0">
+                        Su navegador no soporta el elemento canvas.
+                    </canvas>
+                </div>
+                <div class="info-box" role="note">
+                    <strong>Nota:</strong> El gráfico muestra la magnitud normalizada del voltaje (azul) y la corriente (cian)
+                    a lo largo de la línea de transmisión. Los marcadores indican las posiciones de los máximos y mínimos de voltaje.
+                </div>
+            </section>
+
+            <!-- Smith Chart -->
+            <section id="smith" aria-labelledby="smith-heading">
+                <h2 class="vis-title" id="smith-heading">
+                    <span class="icon smith-icon" aria-hidden="true">⊚</span>
+                    Diagrama de Smith
+                </h2>
+                <div class="svg-container">
+                    <svg
+                        id="smithChart"
+                        viewBox="-1.2 -1.2 2.4 2.4"
+                        preserveAspectRatio="xMidYMid meet"
+                        role="img"
+                        aria-label="Diagrama de Smith mostrando la impedancia de carga normalizada y el círculo de ROE"
+                        tabindex="0">
+                        <title>Diagrama de Smith Interactivo</title>
+                        <desc>Representación gráfica de la impedancia de carga normalizada en el plano complejo</desc>
+                        <!-- Smith chart will be drawn here by JavaScript -->
+                    </svg>
+                </div>
+                <div class="smith-controls">
+                    <button type="button" id="zoomInBtn" class="zoom-btn" aria-label="Ampliar diagrama de Smith">
+                        <span aria-hidden="true">🔍+</span>
+                    </button>
+                    <button type="button" id="zoomOutBtn" class="zoom-btn" aria-label="Reducir diagrama de Smith">
+                        <span aria-hidden="true">🔍−</span>
+                    </button>
+                    <button type="button" id="resetZoomBtn" class="zoom-btn" aria-label="Restablecer zoom">
+                        <span aria-hidden="true">↺</span>
+                    </button>
+                </div>
+                <div class="info-box warning" role="note">
+                    <strong>Nota:</strong> El punto ámbar representa la impedancia de carga normalizada.
+                    El círculo cian muestra la ROE (Relación de Onda Estacionaria). 
+                    Use los controles de zoom para explorar detalles.
+                </div>
+            </section>
+
+            <!-- Standing Wave Diagram -->
+            <section id="standingWave" aria-labelledby="standingWave-heading">
+                <h2 class="vis-title" id="standingWave-heading">
+                    <span class="icon" aria-hidden="true">📍</span>
+                    Ubicación de Máximos y Mínimos
+                </h2>
+                <div
+                    class="standing-wave-diagram"
+                    id="standingWaveDiagram"
+                    role="img"
+                    aria-label="Diagrama de la línea de transmisión mostrando la ubicación de máximos (azul) y mínimos (rojo) de voltaje"
+                    tabindex="0">
+                    <div class="transmission-line" aria-hidden="true"></div>
+                    <!-- Max/min points will be added by JavaScript -->
+                </div>
+                <div class="info-box" role="note">
+                    <strong>Nota:</strong> La línea representa la línea de transmisión. Los puntos azules indican
+                    máximos de voltaje (Vₘₐₓ) y los puntos rojos indican mínimos de voltaje (Vₘᵢₙ).
+                </div>
+            </section>
+
+            <!-- Numerical Results -->
+            <article id="results" aria-labelledby="results-heading">
+                <h2 class="vis-title" id="results-heading">
+                    <span class="icon" aria-hidden="true">📋</span>
+                    Resultados Numéricos
+                </h2>
+                <div class="results-grid" aria-live="polite" aria-atomic="false">
+                    <div class="result-item">
+                        <div class="result-label">Impedancia Normalizada</div>
+                        <div class="result-value" id="normImpedance" aria-label="Impedancia normalizada">1.50 + j0.60</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">Coeficiente de Reflexión (Γ)</div>
+                        <div class="result-value" id="gamma" aria-label="Coeficiente de reflexión">0.250 + j0.150</div>
+                        <div id="gammaMagAngle" class="highlight" aria-label="Magnitud y ángulo del coeficiente de reflexión">
+                            |Γ| = 0.292 ∠ 30.96°
+                        </div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">ROE (VSWR)</div>
+                        <div class="result-value" id="vswr" aria-label="Relación de onda estacionaria">1.82</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">Pérdida de Retorno</div>
+                        <div class="result-value" id="returnLoss" aria-label="Pérdida de retorno en decibeles">10.7 dB</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">Longitud de Onda</div>
+                        <div class="result-value" id="wavelength" aria-label="Longitud de onda">3.00 m</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">Primer Vₘₐₓ desde Carga</div>
+                        <div class="result-value" id="firstMax" aria-label="Distancia al primer máximo de voltaje">0.183 m</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">Primer Vₘᵢₙ desde Carga</div>
+                        <div class="result-value" id="firstMin" aria-label="Distancia al primer mínimo de voltaje">0.933 m</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">Atenuación de Línea</div>
+                        <div class="result-value" id="loss" aria-label="Atenuación de la línea">0.0 dB</div>
+                        <div class="highlight" aria-label="Nota sobre atenuación">(Línea ideal)</div>
+                    </div>
+                </div>
+                <div class="info-box" role="note">
+                    <strong>Consejo:</strong> Use el botón "Copiar Resultados" para exportar todos los parámetros
+                    calculados al portapapeles en formato de texto listo para informes técnicos.
+                </div>
+            </article>
+        </div>
+    </main>
+
+    <footer role="contentinfo">
+        <p>
+            Aplicación de Análisis de Líneas de Transmisión &copy; 2026 | 
+            Universidad de Oriente - Facultad de Ingenierías | 
+            Diseñado para ingenieros de RF y microondas | 
+            <span class="accessibility-badge" aria-label="Cumple con estándares de accesibilidad">
+                Cumple con WCAG 2.1 AA
+            </span>
+        </p>
+    </footer>
+
+    <!-- Toast notification for user feedback -->
+    <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+
+    <script src="js/config.js"></script>
+    <script src="js/validation.js"></script>
+    <script src="js/calculations.js"></script>
+    <script src="js/visualizations.js"></script>
+    <script src="js/smith-chart.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
